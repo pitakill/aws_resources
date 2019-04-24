@@ -106,10 +106,17 @@ func (i *EC2Type) GetServices() {
 		return
 	}
 
-	method := reflect.ValueOf(i.service).MethodByName(i.methodName)
-	//test := method.Call([]reflect.Value{reflect.ValueOf(i.inputName)})
+	instance, err := typeRegistry.Get(i.inputName)
+	if err != nil {
+		panic(err)
+	}
 
-	fmt.Println(&method)
+	fmt.Printf("%+v\n", i)
+
+	method := reflect.ValueOf(i.service).MethodByName(i.methodName)
+	called := method.Call([]reflect.Value{reflect.ValueOf(instance)})
+
+	fmt.Println(&called)
 
 	//req := i.service.DescribeVpcsRequest(&ec2.DescribeVpcsInput{})
 
