@@ -17,7 +17,7 @@ func (t typeRegister) Set(i interface{}) {
 
 func (t typeRegister) Get(name string) (interface{}, error) {
 	if typ, ok := t[name]; ok {
-		return reflect.New(typ).Elem().Interface(), nil
+		return reflect.New(typ).Interface(), nil
 	}
 
 	return nil, errors.New("not valid type registered: " + name)
@@ -26,11 +26,21 @@ func (t typeRegister) Get(name string) (interface{}, error) {
 var typeRegistry = make(typeRegister)
 
 func init() {
+	// We have to generate this crawling the source code of the sdk of
+	// CloudFormation or similar
+	// This is a must :-(
 	typeRegistry.Set(new(ec2.DescribeInternetGatewaysInput))
 	typeRegistry.Set(new(ec2.DescribeSecurityGroupsInput))
 	typeRegistry.Set(new(ec2.DescribeInstancesInput))
 	typeRegistry.Set(new(ec2.DescribeVpcsInput))
 	typeRegistry.Set(new(ec2.DescribeRouteTablesInput))
 	typeRegistry.Set(new(ec2.DescribeSubnetsInput))
+
+	//typeRegistry.Set(new(ec2.DescribeInternetGatewaysOutput))
+	//typeRegistry.Set(new(ec2.DescribeSecurityGroupsOutput))
+	//typeRegistry.Set(new(ec2.DescribeInstancesOutput))
+	//typeRegistry.Set(new(ec2.DescribeVpcsOutput))
+	//typeRegistry.Set(new(ec2.DescribeRouteTablesOutput))
+	//typeRegistry.Set(new(ec2.DescribeSubnetsOutput))
 	runtime.GC()
 }

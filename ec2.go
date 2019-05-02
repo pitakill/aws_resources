@@ -15,6 +15,7 @@ type EC2Type struct {
 	resourceType string
 	methodName   string
 	inputName    string
+	outputName   string
 	partialName  string
 }
 
@@ -66,6 +67,17 @@ func (i *EC2Type) SetInputName() {
 	i.inputName = name
 }
 
+func (i *EC2Type) SetOutputName() {
+	if i.partialName == "" {
+		return
+	}
+
+	// "Vpc" to "DescribeVpcsRequest"
+	name := fmt.Sprintf("Describe%ssOutput", i.partialName)
+
+	i.outputName = name
+}
+
 func (i *EC2Type) SetMethodName() {
 	if i.partialName == "" {
 		return
@@ -91,6 +103,7 @@ func (i *EC2Type) Configure(param interface{}) error {
 	i.SetPartialName()
 	i.SetMethodName()
 	i.SetInputName()
+	i.SetOutputName()
 
 	return nil
 }
@@ -112,53 +125,19 @@ func (i *EC2Type) GetServices() {
 	}
 
 	method := reflect.ValueOf(i.service).MethodByName(i.methodName)
+	called := method.Call([]reflect.Value{reflect.ValueOf(instance)})
 
-	// This works but we don't want this switch
-	switch instance.(type) {
-	case ec2.DescribeInternetGatewaysInput:
-		it := instance.(ec2.DescribeInternetGatewaysInput)
-		called := method.Call([]reflect.Value{reflect.ValueOf(&it)})
-		fmt.Printf("%s\n", called[0])
-	case ec2.DescribeSecurityGroupsInput:
-		it := instance.(ec2.DescribeSecurityGroupsInput)
-		called := method.Call([]reflect.Value{reflect.ValueOf(&it)})
-		fmt.Printf("%s\n", called[0])
-	case ec2.DescribeInstancesInput:
-		it := instance.(ec2.DescribeInstancesInput)
-		called := method.Call([]reflect.Value{reflect.ValueOf(&it)})
-		fmt.Printf("%s\n", called[0])
-	case ec2.DescribeVpcsInput:
-		it := instance.(ec2.DescribeVpcsInput)
-		called := method.Call([]reflect.Value{reflect.ValueOf(&it)})
-		fmt.Printf("%s\n", called[0])
-	case ec2.DescribeRouteTablesInput:
-		it := instance.(ec2.DescribeRouteTablesInput)
-		called := method.Call([]reflect.Value{reflect.ValueOf(&it)})
-		fmt.Printf("%s\n", called[0])
-	case ec2.DescribeSubnetsInput:
-		it := instance.(ec2.DescribeSubnetsInput)
-		called := method.Call([]reflect.Value{reflect.ValueOf(&it)})
-		fmt.Printf("%s\n", called[0])
-	}
+	send := reflect.Indirect(called[0]).MethodByName("Send")
+	calledSend := send.Call([]reflect.Value{})
 
-	/*
-	 * We want to automatize the following commented logic with every resource in
-	 * AWS
-	 */
+	res := calledSend[0]
 
-	//method := reflect.ValueOf(i.service).MethodByName(i.methodName)
-	//called := method.Call([]reflect.Value{reflect.ValueOf(test)})
-
-	//fmt.Println(&called)
-
-	//req := i.service.DescribeVpcsRequest(&ec2.DescribeVpcsInput{})
-
-	//res, err := req.Send()
+	//typ, err := typeRegistry.Get(i.outputName)
 	//if err != nil {
-	//panic(err.Error())
+	//panic(err)
 	//}
 
-	//fmt.Println(res)
+	fmt.Printf("%v\n", res)
 }
 
 func (i *EC2Type) GetResources() {}
