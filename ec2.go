@@ -31,17 +31,7 @@ func EC2Factory(cfg aws.Config) Factory {
 	return i
 }
 
-var notValid = []string{
-	"AWS::EC2::VPCGatewayAttachment",
-	"AWS::EC2::Route",
-	"AWS::EC2::SubnetRouteTableAssociation",
-}
-
 func (i *EC2Type) SetPartialName() {
-	if ContainsString(notValid, i.resourceType) {
-		return
-	}
-
 	// "AWS::EC2::VPC" to "VPC"
 	name := strings.ReplaceAll(i.resourceType, "AWS::EC2::", "")
 
@@ -61,7 +51,7 @@ func (i *EC2Type) SetInputName() {
 		return
 	}
 
-	// "Vpc" to "DescribeVpcsRequest"
+	// "Vpc" to "DescribeVpcsInput"
 	name := fmt.Sprintf("Describe%ssInput", i.partialName)
 
 	i.inputName = name
@@ -72,7 +62,7 @@ func (i *EC2Type) SetOutputName() {
 		return
 	}
 
-	// "Vpc" to "DescribeVpcsRequest"
+	// "Vpc" to "DescribeVpcsOutput"
 	name := fmt.Sprintf("Describe%ssOutput", i.partialName)
 
 	i.outputName = name
@@ -83,7 +73,7 @@ func (i *EC2Type) SetMethodName() {
 		return
 	}
 
-	// "Vpc" to "DescribeVpcsInput"
+	// "Vpc" to "DescribeVpcsRequest"
 	name := fmt.Sprintf("Describe%ssRequest", i.partialName)
 
 	i.methodName = name
@@ -119,9 +109,12 @@ func (i *EC2Type) GetServices() {
 		return
 	}
 
-	instance, err := typeRegistry.Get(i.inputName)
+	instance, err := typeRegistry.Get("ec2", i.inputName)
 	if err != nil {
-		panic(err)
+		// We can ignore this kind of errors because there is not resources bu the
+		// i.inputName
+		//log.Println(err)
+		return
 	}
 
 	method := reflect.ValueOf(i.service).MethodByName(i.methodName)
@@ -131,11 +124,6 @@ func (i *EC2Type) GetServices() {
 	calledSend := send.Call([]reflect.Value{})
 
 	res := calledSend[0]
-
-	//typ, err := typeRegistry.Get(i.outputName)
-	//if err != nil {
-	//panic(err)
-	//}
 
 	fmt.Printf("%v\n", res)
 }
