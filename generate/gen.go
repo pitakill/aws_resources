@@ -15,7 +15,7 @@ import (
 )
 
 //go:generate go run gen.go
-//go:generate gofmt -s -w ../init.go
+//go:generate gofmt -s -w ../*.go
 var (
 	resourcesTypes = make(map[string][]string, 0)
 	resourcesTyp   = make([]string, 0)
@@ -81,7 +81,8 @@ func main() {
 	}
 
 	generateInit("init", "code", template)
-	generateTypeFiles(template)
+	generateResourcesFiles(template)
+	generateTypeFile(template)
 }
 
 func getFiles(path string) []string {
@@ -151,7 +152,22 @@ func getSDKVersion() (string, error) {
 	return "", errorNoSDK
 }
 
-func generateTypeFiles(tpl *template.Template) {
+func generateTypeFile(tpl *template.Template) {
+	f, err := os.Create("../types.go")
+	die(err)
+	defer f.Close()
+
+	err = tpl.ExecuteTemplate(f, "types.tpl", struct {
+		Timestamp time.Time
+		Resources []string
+	}{
+		Timestamp: timestamp,
+		Resources: resourcesTyp,
+	})
+	die(err)
+}
+
+func generateResourcesFiles(tpl *template.Template) {
 	for _, typ := range resourcesTyp {
 		f, err := os.Create("../" + strings.ToLower(typ) + ".go")
 		die(err)
