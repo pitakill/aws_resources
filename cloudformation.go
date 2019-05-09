@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
@@ -87,16 +86,16 @@ func (i *CloudFormationType) GetResources() {
 
 func (i *CloudFormationType) GetResourcesDetail() {
 	for _, resource := range i.resources {
-		if strings.Contains(*resource.ResourceType, "AWS::EC2::") {
-			config := &EC2TypeConfig{
-				resourceType: *resource.ResourceType,
-			}
-
-			instance := relations["ec2"](cfg)
-			if err := instance.Configure(*config); err != nil {
-				panic(err)
-			}
-			instance.GetServices()
+		config := &TypeConfig{
+			resourceType: *resource.ResourceType,
 		}
+
+		s := getKind(*resource.ResourceType)
+
+		instance := relations[s](cfg)
+		if err := instance.Configure(*config); err != nil {
+			panic(err)
+		}
+		instance.GetServices()
 	}
 }

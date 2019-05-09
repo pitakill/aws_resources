@@ -22,10 +22,6 @@ type {{ .Resource }}Type struct {
 	partialName  string
 }
 
-type {{ .Resource }}TypeConfig struct {
-	resourceType string
-}
-
 func {{ .Resource }}Factory(cfg aws.Config) Factory {
 	i := new({{ .Resource }}Type)
 
@@ -87,9 +83,9 @@ func (i *{{ .Resource }}Type) SetResourceType(t string) {
 }
 
 func (i *{{ .Resource }}Type) Configure(param interface{}) error {
-	config, ok := param.({{ .Resource }}TypeConfig)
+	config, ok := param.(TypeConfig)
 	if !ok {
-		return errors.New("config is not a valid param ({{ .Resource }}TypeConfig)")
+		return errors.New("config is not a valid param (TypeConfig)")
 	}
 
 	i.SetResourceType(config.resourceType)

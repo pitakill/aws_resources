@@ -15,7 +15,7 @@ import (
 )
 
 //go:generate go run gen.go
-//go:generate gofmt -s -w ../*.go
+//go:generate gofmt -s -w ../
 var (
 	resourcesTypes = make(map[string][]string, 0)
 	resourcesTyp   = make([]string, 0)

@@ -18,6 +18,11 @@ type Factory interface {
 
 type Info func(aws.Config) Factory
 
+type TypeConfig struct {
+	resourceType string
+}
+
+
 var relations = map[string]Info{
 	"cloudformation": CloudFormationFactory,
 	{{- range .Resources }}
