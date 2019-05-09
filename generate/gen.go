@@ -36,6 +36,9 @@ func main() {
 	files := getFiles(getPathnameCode(version))
 
 	for _, file := range files {
+		if strings.Contains(file, "cloudformation") {
+			continue
+		}
 		describes, types := getInfoFromFile(file)
 
 		if len(describes) > 0 {
@@ -141,7 +144,7 @@ func getSDKVersion() (string, error) {
 
 		if strings.Contains(scanner.Text(), SDKName) {
 			splittedLine := strings.Split(line, " ")
-			return splittedLine[1], nil
+			return splittedLine[len(splittedLine)-1], nil
 		}
 	}
 
