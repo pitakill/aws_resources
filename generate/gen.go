@@ -17,15 +17,35 @@ import (
 //go:generate go run gen.go
 //go:generate gofmt -s -w ../
 var (
-	resourcesTypes = make(map[string][]string, 0)
-	resourcesTyp   = make([]string, 0)
-	SDKName        = "github.com/aws/aws-sdk-go-v2"
-	errorNoSDK     = errors.New("The AWS SDK v2 is not a dependency from this project")
-	timestamp      = time.Now()
-	tplFuncs       = template.FuncMap{
+	keywords   = []string{"Describe", "List"}
+	SDKName    = "github.com/aws/aws-sdk-go-v2"
+	errorNoSDK = errors.New("The AWS SDK v2 is not a dependency from this project")
+	timestamp  = time.Now()
+	tplFuncs   = template.FuncMap{
 		"ToLower": strings.ToLower,
+		"GetPrefix": func(s string) string {
+			for _, k := range keywords {
+				if strings.HasPrefix(s, k) {
+					return k
+				}
+			}
+			return ""
+		},
+		"Clean": func(s string) string {
+			for _, k := range keywords {
+				s = strings.TrimPrefix(s, k)
+			}
+			s = strings.TrimSuffix(s, "Input")
+			return s
+		},
 	}
+	test = make([]Typ, 0)
 )
+
+type Typ struct {
+	Name      string
+	Resources []string
+}
 
 func main() {
 	template := template.Must(template.New("").Funcs(tplFuncs).ParseGlob("*.tpl"))
@@ -39,48 +59,44 @@ func main() {
 		if strings.Contains(file, "cloudformation") {
 			continue
 		}
-		describes, types := getInfoFromFile(file)
+		typ := getInfoFromFile(file)
 
-		if len(describes) > 0 {
-			resources := make([]string, 0)
-			for _, structure := range describes {
+		var name string
+		resources := make([]string, 0)
 
-				structure = strings.TrimRightFunc(structure, func(r rune) bool {
-					return r != ')'
-				})
+		for _, r := range typ.Resources {
+			r = strings.TrimRightFunc(r, func(r rune) bool {
+				return r != ')'
+			})
 
-				structure = strings.TrimLeftFunc(structure, func(r rune) bool {
-					return r != '('
-				})
+			r = strings.TrimLeftFunc(r, func(r rune) bool {
+				return r != '('
+			})
 
-				structure = strings.TrimLeftFunc(structure, func(r rune) bool {
-					return r != '.'
-				})
+			r = strings.TrimLeftFunc(r, func(r rune) bool {
+				return r != '.'
+			})
 
-				structure = strings.Trim(structure, "().")
+			r = strings.Trim(r, "().")
 
-				resources = append(resources, structure)
-			}
+			resources = append(resources, r)
 
-			sliced := strings.Split(file, string(filepath.Separator))
-			typ := strings.TrimSuffix(sliced[len(sliced)-3], "iface")
-
-			resourcesTypes[typ] = resources
+			sliced := strings.Split(typ.Name, string(" "))
+			name = strings.TrimSuffix(sliced[len(sliced)-3], "iface")
+			name = strings.TrimSuffix(name, "API")
 		}
 
-		if len(types) > 0 {
-			for _, typ := range types {
-				splitted := strings.Split(typ, " ")
-				typCleaned := splitted[1]
-
-				typCleaned = strings.TrimSuffix(typCleaned, "API")
-
-				resourcesTyp = append(resourcesTyp, typCleaned)
-			}
+		if name == "" && len(resources) == 0 {
+			continue
 		}
+
+		typ.Name = name
+		typ.Resources = resources
+
+		test = append(test, *typ)
 	}
 
-	generateInit("init", "code", template)
+	generateInit(template)
 	generateResourcesFiles(template)
 	generateTypeFile(template)
 }
@@ -105,11 +121,13 @@ func openFile(input string) []byte {
 	return f
 }
 
-func getInfoFromFile(filename string) (declarations, types []string) {
+func getInfoFromFile(filename string) *Typ {
 	f := openFile(filename)
 
 	data := bytes.NewReader(f)
 	scanner := bufio.NewScanner(data)
+
+	r := new(Typ)
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -121,15 +139,18 @@ func getInfoFromFile(filename string) (declarations, types []string) {
 		line = strings.TrimSpace(line)
 
 		if strings.Contains(line, "type") {
-			types = append(types, line)
+			r.Name = line
 		}
 
-		if strings.HasPrefix(line, "Describe") {
-			declarations = append(declarations, line)
+		for _, keyword := range keywords {
+			if strings.HasPrefix(line, keyword) {
+				r.Resources = append(r.Resources, line)
+				continue
+			}
 		}
 	}
 
-	return
+	return r
 }
 
 func getSDKVersion() (string, error) {
@@ -152,24 +173,30 @@ func getSDKVersion() (string, error) {
 	return "", errorNoSDK
 }
 
-func generateTypeFile(tpl *template.Template) {
-	f, err := os.Create("../types.go")
+func die(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func generateInit(tpl *template.Template) {
+	f, err := os.Create("../init.go")
 	die(err)
 	defer f.Close()
 
-	err = tpl.ExecuteTemplate(f, "types.tpl", struct {
-		Timestamp time.Time
-		Resources []string
+	err = tpl.ExecuteTemplate(f, "init.tpl", struct {
+		Timestamp      time.Time
+		ResourcesTypes []Typ
 	}{
-		Timestamp: timestamp,
-		Resources: resourcesTyp,
+		Timestamp:      timestamp,
+		ResourcesTypes: test,
 	})
 	die(err)
 }
 
 func generateResourcesFiles(tpl *template.Template) {
-	for _, typ := range resourcesTyp {
-		f, err := os.Create("../" + strings.ToLower(typ) + ".go")
+	for _, typ := range test {
+		f, err := os.Create("../" + strings.ToLower(typ.Name) + ".go")
 		die(err)
 		defer f.Close()
 
@@ -178,29 +205,23 @@ func generateResourcesFiles(tpl *template.Template) {
 			Resource  string
 		}{
 			Timestamp: timestamp,
-			Resource:  typ,
+			Resource:  typ.Name,
 		})
 		die(err)
 	}
 }
 
-func generateInit(output, input string, tpl *template.Template) {
-	f, err := os.Create("../" + output + ".go")
+func generateTypeFile(tpl *template.Template) {
+	f, err := os.Create("../types.go")
 	die(err)
 	defer f.Close()
 
-	err = tpl.ExecuteTemplate(f, input+".tpl", struct {
-		Timestamp      time.Time
-		ResourcesTypes map[string][]string
+	err = tpl.ExecuteTemplate(f, "types.tpl", struct {
+		Timestamp time.Time
+		Resources []Typ
 	}{
-		Timestamp:      timestamp,
-		ResourcesTypes: resourcesTypes,
+		Timestamp: timestamp,
+		Resources: test,
 	})
 	die(err)
-}
-
-func die(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }

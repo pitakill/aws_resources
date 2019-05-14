@@ -25,7 +25,7 @@ type TypeConfig struct {
 
 var relations = map[string]Info{
 	"cloudformation": CloudFormationFactory,
-	{{- range .Resources }}
-	"{{ ToLower . }}": {{ . }}Factory,
+	{{- range $index, $typ := .Resources }}
+	"{{ ToLower $typ.Name }}": {{ $typ.Name }}Factory,
 	{{- end }}
 }

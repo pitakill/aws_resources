@@ -6,6 +6,7 @@ package main
 import (
 	"errors"
 	"fmt"
+  "log"
 	"reflect"
 	"strings"
 
@@ -50,8 +51,12 @@ func (i *{{ .Resource }}Type) SetInputName() {
 		return
 	}
 
-	// Ex: "Vpc" to "DescribeVpcsInput"
-	name := fmt.Sprintf("Describe%ssInput", i.partialName)
+	// Add the s to the partialName
+	partialName := fmt.Sprintf("%ss", i.partialName)
+
+	// Ex: "Vpc" to "DescribeVpcsInput or ListVpcsInput" accordingly
+	prefix := search[r{resource: "{{ ToLower .Resource }}", kind: partialName}]
+	name := fmt.Sprintf("%s%sInput", prefix, partialName)
 
 	i.inputName = name
 }
@@ -61,8 +66,12 @@ func (i *{{ .Resource }}Type) SetOutputName() {
 		return
 	}
 
-	// Ex: "Vpc" to "DescribeVpcsOutput"
-	name := fmt.Sprintf("Describe%ssOutput", i.partialName)
+	// Add the s to the partialName
+	partialName := fmt.Sprintf("%ss", i.partialName)
+
+	// Ex: "Vpc" to "DescribeVpcsOutput or ListVpcsOutput" accordingly
+	prefix := search[r{resource: "{{ ToLower .Resource }}", kind: partialName}]
+	name := fmt.Sprintf("%s%sOutput", prefix, partialName)
 
 	i.outputName = name
 }
@@ -72,8 +81,12 @@ func (i *{{ .Resource }}Type) SetMethodName() {
 		return
 	}
 
-	// Ex: "Vpc" to "DescribeVpcsRequest"
-	name := fmt.Sprintf("Describe%ssRequest", i.partialName)
+	// Add the s to the partialName
+	partialName := fmt.Sprintf("%ss", i.partialName)
+
+	// Ex: "Vpc" to "DescribeVpcsRequest or ListVpcsRequest" accordingly
+	prefix := search[r{resource: "{{ ToLower .Resource }}", kind: partialName}]
+	name := fmt.Sprintf("%s%sRequest", prefix, partialName)
 
 	i.methodName = name
 }
@@ -112,7 +125,7 @@ func (i *{{ .Resource }}Type) GetServices() {
 	if err != nil {
 		// We can ignore this kind of errors because there is not resources by the
 		// i.inputName
-		//log.Println(err)
+    log.Println(err)
 		return
 	}
 
