@@ -1,4 +1,4 @@
-package main
+package aws_resources
 
 import (
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -19,13 +19,15 @@ func main() {
 	cfg = config
 
 	cfConfig := &CloudFormationTypeConfig{
-		stackStatus: []cloudformation.StackStatus{
+		StackStatus: []cloudformation.StackStatus{
 			cloudformation.StackStatusCreateComplete,
 		},
-		stackName: "CloudFormationExample",
+		//StackName: "CloudFormationExample",
+		//StackName: "awseb-e-82ibs3r2xk-stack",
+		StackName: "aws-serverless-repository-alexa-skills-kit-nodejs-factskill-marin",
 	}
 
-	iCF := relations["cloudformation"](cfg)
+	iCF := Relations["cloudformation"](cfg)
 	if err := iCF.Configure(*cfConfig); err != nil {
 		panic(err)
 	}

@@ -1,4 +1,4 @@
-module github.com/pitakill/aws-resources
+module github.com/pitakill/aws_resources
 
 go 1.12
 

@@ -1,7 +1,8 @@
-package main
+package aws_resources
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
@@ -16,8 +17,8 @@ type CloudFormationType struct {
 }
 
 type CloudFormationTypeConfig struct {
-	stackStatus []cloudformation.StackStatus
-	stackName   string
+	StackStatus []cloudformation.StackStatus
+	StackName   string
 }
 
 func CloudFormationFactory(cfg aws.Config) Factory {
@@ -34,8 +35,8 @@ func (i *CloudFormationType) Configure(param interface{}) error {
 		return errors.New("config is not a valid param (CloudFormationTypeConfig)")
 	}
 
-	i.SetStackName(config.stackName)
-	i.SetStatus(config.stackStatus)
+	i.SetStackName(config.StackName)
+	i.SetStatus(config.StackStatus)
 
 	return nil
 }
@@ -92,7 +93,9 @@ func (i *CloudFormationType) GetResourcesDetail() {
 
 		s := getKind(*resource.ResourceType)
 
-		instance := relations[s](cfg)
+		fmt.Println(s)
+
+		instance := Relations[s](cfg)
 		if err := instance.Configure(*config); err != nil {
 			panic(err)
 		}
