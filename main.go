@@ -1,4 +1,4 @@
-package aws_resources
+package main
 
 import (
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -10,7 +10,7 @@ var cfg aws.Config
 
 func main() {
 	config, err := external.LoadDefaultAWSConfig(
-		external.WithSharedConfigProfile("dou"),
+		external.WithSharedConfigProfile("default"),
 	)
 	if err != nil {
 		panic("unable to load SDK config, " + err.Error())

@@ -1,4 +1,4 @@
-package aws_resources
+package main
 
 import (
 	"strings"
