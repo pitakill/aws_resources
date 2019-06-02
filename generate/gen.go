@@ -196,18 +196,27 @@ func generateInit(tpl *template.Template) {
 
 func generateResourcesFiles(tpl *template.Template) {
 	for _, typ := range test {
-		f, err := os.Create("../" + strings.ToLower(typ.Name) + ".go")
-		die(err)
-		defer f.Close()
 
-		err = tpl.ExecuteTemplate(f, "resource.tpl", struct {
-			Timestamp time.Time
-			Resource  string
-		}{
-			Timestamp: timestamp,
-			Resource:  typ.Name,
-		})
-		die(err)
+		templates := map[string]string{
+			"resource.tpl":      "../" + strings.ToLower(typ.Name) + ".go",
+			"resource_data.tpl": "../" + strings.ToLower(typ.Name) + "_data.go",
+		}
+
+		for key := range templates {
+			f, err := os.Create(templates[key])
+			die(err)
+			defer f.Close()
+
+			err = tpl.ExecuteTemplate(f, key, struct {
+				Timestamp time.Time
+				Resource  string
+			}{
+				Timestamp: timestamp,
+				Resource:  typ.Name,
+			})
+			die(err)
+
+		}
 	}
 }
 

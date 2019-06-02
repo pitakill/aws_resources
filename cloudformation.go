@@ -2,7 +2,13 @@ package aws_resources
 
 import (
 	"errors"
+<<<<<<< HEAD
 	"reflect"
+=======
+	"fmt"
+	"reflect"
+	"strings"
+>>>>>>> just added info to grab the data for experiment
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
@@ -112,4 +118,54 @@ func (i *CloudFormationType) GetResourcesDetail() ([]reflect.Value, error) {
 	}
 
 	return r, nil
+}
+
+// added temporary just to get the info
+func (i *CloudFormationType) CallAWS() (map[string]reflect.Value, error) {
+	var responseError error
+	errorlist := []string{}
+	outcome := map[string]reflect.Value{}
+	instances := map[string][]reflect.Value{}
+
+	// populating
+	i.GetServices()
+	i.GetResources()
+
+	for _, resource := range i.resources {
+		config := &TypeConfig{
+			resourceType: *resource.ResourceType,
+		}
+		instance := Relations[getKind(*resource.ResourceType)](cfg)
+		// in case of error adding and continue
+		if err := instance.Configure(*config); err != nil {
+			errorlist = append(errorlist, err.Error())
+			continue
+		}
+		// cast to DataRespose
+		if requester, hasData := instance.(FactoryData); hasData {
+			resp, err := requester.CallAWS()
+
+			if err != nil {
+				errorlist = append(errorlist, err.Error())
+				continue
+			}
+
+			for awsRsrc := range resp {
+				if _, hasValues := instances[awsRsrc]; hasValues {
+					instances[awsRsrc] = append(instances[awsRsrc], resp[awsRsrc])
+				} else {
+					instances[awsRsrc] = []reflect.Value{resp[awsRsrc]}
+				}
+			}
+		}
+	}
+	// doing the reflection to bypass to the upper layer
+	for i := range instances {
+		outcome[i] = reflect.ValueOf(instances[i])
+	}
+
+	if len(errorlist) > 0 {
+		responseError = errors.New(strings.Join(errorlist, "\n"))
+	}
+	return outcome, responseError
 }
