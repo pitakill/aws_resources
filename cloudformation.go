@@ -2,7 +2,7 @@ package aws_resources
 
 import (
 	"errors"
-	"fmt"
+	"reflect"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
@@ -55,14 +55,14 @@ func (i *CloudFormationType) SetStackName(name string) {
 	i.stackName = name
 }
 
-func (i *CloudFormationType) GetServices() {
+func (i *CloudFormationType) GetServices() (reflect.Value, error) {
 	req := i.service.ListStacksRequest(&cloudformation.ListStacksInput{
 		StackStatusFilter: i.status,
 	})
 
 	res, err := req.Send()
 	if err != nil {
-		panic(err.Error())
+		return reflect.Value{}, err
 	}
 
 	for _, resource := range res.StackSummaries {
@@ -70,22 +70,28 @@ func (i *CloudFormationType) GetServices() {
 			i.stackResource = resource
 		}
 	}
+
+	return reflect.Value{}, nil
 }
 
-func (i *CloudFormationType) GetResources() {
+func (i *CloudFormationType) GetResources() error {
 	req := i.service.DescribeStackResourcesRequest(&cloudformation.DescribeStackResourcesInput{
 		StackName: i.stackResource.StackName,
 	})
 
 	res, err := req.Send()
 	if err != nil {
-		panic("failed to get the resources, " + err.Error())
+		return errors.New("failed to get the resources, " + err.Error())
 	}
 
 	i.resources = res.StackResources
+
+	return nil
 }
 
-func (i *CloudFormationType) GetResourcesDetail() {
+func (i *CloudFormationType) GetResourcesDetail() ([]reflect.Value, error) {
+	r := make([]reflect.Value, 0, 0)
+
 	for _, resource := range i.resources {
 		config := &TypeConfig{
 			resourceType: *resource.ResourceType,
@@ -93,12 +99,17 @@ func (i *CloudFormationType) GetResourcesDetail() {
 
 		s := getKind(*resource.ResourceType)
 
-		fmt.Println(s)
-
 		instance := Relations[s](cfg)
 		if err := instance.Configure(*config); err != nil {
-			panic(err)
+			return []reflect.Value{}, err
 		}
-		instance.GetServices()
+		response, err := instance.GetServices()
+		if err != nil {
+			return []reflect.Value{}, err
+		}
+
+		r = append(r, response)
 	}
+
+	return r, nil
 }

@@ -116,17 +116,19 @@ func (i *{{ .Resource }}Type) SetService(cfg aws.Config) {
 	i.service = srv
 }
 
-func (i *{{ .Resource }}Type) GetServices() {
+func (i *{{ .Resource }}Type) GetServices() (reflect.Value, error) {
 	if i.methodName == "" {
-		return
+		return reflect.Value{}, errors.New("method can't be an empty string")
 	}
 
 	instance, err := typeRegistry.Get("{{ ToLower .Resource }}", i.inputName)
 	if err != nil {
 		// We can ignore this kind of errors because there is not resources by the
 		// i.inputName
-    log.Println(err)
-		return
+		log.Println(err)
+		// This seems odd, we can do better
+		// We need to think about this again
+		return reflect.Value{}, nil
 	}
 
 	method := reflect.ValueOf(i.service).MethodByName(i.methodName)
@@ -135,11 +137,11 @@ func (i *{{ .Resource }}Type) GetServices() {
 	send := reflect.Indirect(called[0]).MethodByName("Send")
 	calledSend := send.Call([]reflect.Value{})
 
-	res := calledSend[0]
-
-	fmt.Printf("%v\n", res)
+	return calledSend[0], nil
 }
 
-func (i *{{ .Resource }}Type) GetResources() {}
+func (i *{{ .Resource }}Type) GetResources() error {return nil}
 
-func (i *{{ .Resource }}Type) GetResourcesDetail() {}
+func (i *{{ .Resource }}Type) GetResourcesDetail() ([]reflect.Value, error) {
+	return []reflect.Value{}, nil
+}
