@@ -4,13 +4,8 @@
 package aws_resources
 
 import (
-<<<<<<< HEAD
-  "reflect"
-
-=======
-    "errors"
+	"errors"
 	"reflect"
->>>>>>> just added info to grab the data for experiment
 	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
@@ -36,10 +31,6 @@ type TypeConfig struct {
 	resourceType string
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> just added info to grab the data for experiment
 var Relations = map[string]Info{
 	"cloudformation": CloudFormationFactory,
 	{{- range $index, $typ := .Resources }}

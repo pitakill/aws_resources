@@ -4,14 +4,13 @@
 package aws_resources
 
 import (
-    "reflect"
+	"reflect"
 )
 
 func (i *{{ .Resource }}Type) CallAWS() (map[string]reflect.Value, error){
-	
-    outcome := map[string]reflect.Value{}
+	outcome := map[string]reflect.Value{}
 
-    if i.methodName == "" {
+	if i.methodName == "" {
 		return nil, NoServiceMethodName 
 	}
 
@@ -27,5 +26,5 @@ func (i *{{ .Resource }}Type) CallAWS() (map[string]reflect.Value, error){
 	calledSend := send.Call([]reflect.Value{})
 	outcome[i.resourceType] = calledSend[0]
 
-    return outcome, nil
+	return outcome, nil
 }

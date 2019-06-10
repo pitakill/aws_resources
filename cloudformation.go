@@ -2,13 +2,8 @@ package aws_resources
 
 import (
 	"errors"
-<<<<<<< HEAD
-	"reflect"
-=======
-	"fmt"
 	"reflect"
 	"strings"
->>>>>>> just added info to grab the data for experiment
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
