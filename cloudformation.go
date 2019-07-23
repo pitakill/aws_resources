@@ -89,6 +89,16 @@ func (i *CloudFormationType) GetResources() error {
 	return nil
 }
 
+func (i *CloudFormationType) GetSummary() ([]cloudformation.StackResource, error) {
+	err := i.GetResources()
+	if err != nil {
+		return nil, err
+	}
+
+	return i.resources, nil
+
+}
+
 func (i *CloudFormationType) GetResourcesDetail() ([]reflect.Value, error) {
 	r := make([]reflect.Value, 0, 0)
 
