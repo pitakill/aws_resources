@@ -43,6 +43,11 @@ func (i *EC2Type) SetPartialName() {
 		name = strings.Title(name)
 	}
 
+	// Sadly
+	if name == "EIP" || name == "EIPAssociation" {
+		name = "Addresses"
+	}
+
 	i.partialName = name
 }
 
@@ -51,8 +56,12 @@ func (i *EC2Type) SetInputName() {
 		return
 	}
 
+	partialName := i.partialName
+
 	// Add the s to the partialName
-	partialName := fmt.Sprintf("%ss", i.partialName)
+	if partialName != "Addresses" {
+		partialName = fmt.Sprintf("%ss", i.partialName)
+	}
 
 	// Ex: "Vpc" to "DescribeVpcsInput or ListVpcsInput" accordingly
 	prefix := search[r{resource: "ec2", kind: partialName}]
@@ -66,8 +75,13 @@ func (i *EC2Type) SetOutputName() {
 		return
 	}
 
+	partialName := i.partialName
+
 	// Add the s to the partialName
-	partialName := fmt.Sprintf("%ss", i.partialName)
+	if i.partialName != "Addresses" {
+		partialName = fmt.Sprintf("%ss", i.partialName)
+	}
+
 
 	// Ex: "Vpc" to "DescribeVpcsOutput or ListVpcsOutput" accordingly
 	prefix := search[r{resource: "ec2", kind: partialName}]
@@ -81,8 +95,12 @@ func (i *EC2Type) SetMethodName() {
 		return
 	}
 
-	// Add the s to the partialName
-	partialName := fmt.Sprintf("%ss", i.partialName)
+	partialName := i.partialName
+
+	if i.partialName != "Addresses" {
+             // Add the s to the partialName
+             partialName = fmt.Sprintf("%ss", i.partialName)
+	}
 
 	// Ex: "Vpc" to "DescribeVpcsRequest or ListVpcsRequest" accordingly
 	prefix := search[r{resource: "ec2", kind: partialName}]
